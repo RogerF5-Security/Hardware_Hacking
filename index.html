@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hardware Hacking 01 — NICASEC × Roger F5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #030812;
+    --bg2:      #0a1020;
+    --bg3:      #0f1830;
+    --card:     #0d1826;
+    --border:   #1a2e50;
+    --cyan:     #00f5ff;
+    --magenta:  #ff006e;
+    --yellow:   #ffd60a;
+    --green:    #39ff14;
+    --orange:   #ff6b00;
+    --purple:   #bf5fff;
+    --text:     #c8d8f0;
+    --text2:    #7090b0;
+    --white:    #f0f8ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ─── GRID OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 3px; }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: rgba(3,8,18,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0,245,255,0.15);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
+
+  .nav-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--cyan);
+    letter-spacing: 3px;
+    text-decoration: none;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 0.25rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text2);
+    text-decoration: none;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .nav-links a:hover {
+    color: var(--cyan);
+    border-color: rgba(0,245,255,0.3);
+    background: rgba(0,245,255,0.05);
+  }
+
+  /* ─── HERO ─── */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: 80px 2rem 4rem;
+  }
+
+  .hero-scanline {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    animation: scan 4s linear infinite;
+  }
+
+  @keyframes scan {
+    0% { top: 0; opacity: 1; }
+    100% { top: 100%; opacity: 0.3; }
+  }
+
+  .hero-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--magenta);
+    letter-spacing: 4px;
+    border: 1px solid rgba(255,0,110,0.4);
+    padding: 0.4rem 1.2rem;
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .hero-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2.5rem, 8vw, 6rem);
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    animation: fadeUp 0.8s 0.1s ease both;
+  }
+
+  .hero-title span.c { color: var(--cyan); }
+  .hero-title span.m { color: var(--magenta); }
+
+  .hero-sub {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(0.9rem, 2.5vw, 1.4rem);
+    color: var(--yellow);
+    letter-spacing: 6px;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  .hero-terminal {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(0,245,255,0.2);
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    max-width: 620px;
+    width: 100%;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.8;
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+
+  .terminal-header {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1rem;
+    align-items: center;
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; }
+  .dot.y { background: #febc2e; }
+  .dot.g { background: #28c840; }
+
+  .terminal-title {
+    font-size: 0.65rem;
+    color: var(--text2);
+    margin-left: 0.5rem;
+    letter-spacing: 2px;
+  }
+
+  .t-line { color: var(--text2); }
+  .t-line .t-key { color: var(--cyan); }
+  .t-line .t-val { color: var(--green); }
+  .t-line .t-val2 { color: var(--yellow); }
+  .t-line .t-prompt { color: var(--magenta); }
+  .t-line .t-cert { color: var(--purple); }
+  .t-cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--cyan);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .hero-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2.5rem;
+    animation: fadeUp 0.8s 0.4s ease both;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-n {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--cyan);
+    display: block;
+  }
+
+  .stat-l {
+    font-size: 0.7rem;
+    color: var(--text2);
+    letter-spacing: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .hero-scroll {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    animation: fadeUp 1s 1s ease both;
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--cyan), transparent);
+    animation: scrollPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes scrollPulse {
+    0%,100%{ opacity: 0.4; transform: scaleY(1); }
+    50%{ opacity: 1; transform: scaleY(1.2); }
+  }
+
+  .scroll-txt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text2);
+    letter-spacing: 2px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── SECTIONS ─── */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 6rem 2rem;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--magenta);
+    letter-spacing: 4px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .section-label::before {
+    content: '';
+    height: 1px;
+    width: 30px;
+    background: var(--magenta);
+    display: inline-block;
+  }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 900;
+    color: var(--white);
+    margin-bottom: 1rem;
+  }
+
+  .section-title span { color: var(--cyan); }
+
+  .section-desc {
+    color: var(--text2);
+    max-width: 600px;
+    margin-bottom: 3rem;
+    font-size: 1rem;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ─── GLOSARIO ─── */
+  #glosario { padding-top: 5rem; }
+
+  .glosario-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-box:focus { border-color: var(--cyan); }
+  .search-box::placeholder { color: var(--text2); }
+
+  .filter-btns {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .filter-btn:hover,
+  .filter-btn.active {
+    color: var(--bg);
+    border-color: var(--cyan);
+    background: var(--cyan);
+  }
+
+  .filter-btn[data-cat="RFID"].active,
+  .filter-btn[data-cat="NFC"].active { background: var(--yellow); border-color: var(--yellow); color: #000; }
+  .filter-btn[data-cat="BLE"].active,
+  .filter-btn[data-cat="Wi-Fi"].active { background: var(--green); border-color: var(--green); color: #000; }
+  .filter-btn[data-cat="UART"].active,
+  .filter-btn[data-cat="JTAG"].active,
+  .filter-btn[data-cat="SPI"].active,
+  .filter-btn[data-cat="I2C"].active { background: var(--orange); border-color: var(--orange); color: #000; }
+  .filter-btn[data-cat="HID"].active { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+  .filter-btn[data-cat="Ataque"].active { background: #ff3333; border-color: #ff3333; color: #fff; }
+  .filter-btn[data-cat="Seguridad"].active { background: var(--purple); border-color: var(--purple); color: #fff; }
+  .filter-btn[data-cat="IoT"].active { background: #00b4a0; border-color: #00b4a0; color: #000; }
+  .filter-btn[data-cat="IA"].active { background: var(--green); border-color: var(--green); color: #000; }
+
+  .glossary-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text2);
+    margin-bottom: 1rem;
+  }
+
+  .glossary-count span { color: var(--cyan); }
+
+  .glosario-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .term-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.3s ease both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.97); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .term-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--cat-color, var(--cyan));
+  }
+
+  .term-card:hover {
+    border-color: var(--cat-color, var(--cyan));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  .term-cat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--cat-color, var(--cyan));
+    letter-spacing: 2px;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .term-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.5rem;
+  }
+
+  .term-full {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text2);
+    margin-bottom: 0.5rem;
+    font-style: italic;
+  }
+
+  .term-desc {
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .term-card.hidden { display: none; }
+
+  /* ─── TECNOLOGÍAS ─── */
+  #tecnologias { padding-top: 3rem; }
+
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .tech-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .tech-card:hover {
+    border-color: var(--accent, var(--cyan));
+    box-shadow: 0 0 30px rgba(0,0,0,0.4), 0 0 1px var(--accent, var(--cyan));
+    transform: translateY(-3px);
+  }
+
+  .tech-header {
+    background: var(--bg3);
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .tech-icon {
+    font-size: 1.6rem;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .tech-header-info { flex: 1; }
+
+  .tech-category {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--accent, var(--cyan));
+    letter-spacing: 2px;
+    margin-bottom: 0.2rem;
+  }
+
+  .tech-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .tech-freq {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text2);
+    font-style: italic;
+  }
+
+  .tech-body {
+    padding: 1.5rem;
+  }
+
+  .tech-what {
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .tech-section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--accent, var(--cyan));
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .tech-uses {
+    list-style: none;
+    margin-bottom: 1rem;
+  }
+
+  .tech-uses li {
+    font-size: 0.82rem;
+    color: var(--text2);
+    padding: 0.2rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.4;
+  }
+
+  .tech-uses li::before {
+    content: '►';
+    color: var(--accent, var(--cyan));
+    font-size: 0.55rem;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+  }
+
+  .tech-tools {
+    background: var(--bg);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 6px;
+    padding: 0.8rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .tech-tools .tool-name { color: var(--accent, var(--cyan)); }
+
+  .tech-impact {
+    background: rgba(255,100,0,0.08);
+    border: 1px solid rgba(255,100,0,0.2);
+    border-radius: 6px;
+    padding: 0.8rem;
+    font-size: 0.82rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tech-impact-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--orange);
+    letter-spacing: 2px;
+    margin-bottom: 0.4rem;
+  }
+
+  /* ─── TIMELINE ─── */
+  #timeline { padding-top: 3rem; }
+
+  .timeline-container {
+    position: relative;
+    padding: 2rem 0;
+  }
+
+  .timeline-line {
+    position: absolute;
+    top: 50%;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--border), var(--cyan), var(--border), transparent);
+    display: none;
+  }
+
+  .timeline-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .tl-item {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+    transition: all 0.3s;
+  }
+
+  .tl-item:hover .tl-card {
+    border-color: var(--tl-color, var(--cyan));
+    transform: translateX(4px);
+  }
+
+  .tl-year-block {
+    text-align: right;
+    padding-top: 0.5rem;
+  }
+
+  .tl-year {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--tl-color, var(--cyan));
+    display: block;
+    line-height: 1;
+  }
+
+  .tl-era {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--text2);
+    letter-spacing: 1px;
+    margin-top: 0.3rem;
+  }
+
+  .tl-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem 1.5rem;
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .tl-card::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 2px;
+    background: var(--tl-color, var(--cyan));
+  }
+
+  .tl-device {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.3rem;
+  }
+
+  .tl-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--tl-color, var(--cyan));
+    letter-spacing: 1px;
+    margin-bottom: 0.6rem;
+    font-style: italic;
+  }
+
+  .tl-desc {
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.5;
+    margin-bottom: 0.8rem;
+  }
+
+  .tl-caps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .tl-cap {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text2);
+    letter-spacing: 0.5px;
+  }
+
+  .tl-creator {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text2);
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .tl-creator span { color: var(--tl-color, var(--cyan)); }
+
+  /* ─── ARSENAL ─── */
+  #arsenal { padding-top: 3rem; }
+
+  .arsenal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .arsenal-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: default;
+  }
+
+  .arsenal-card:hover {
+    border-color: var(--a-color, var(--cyan));
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4), 0 0 20px rgba(0,245,255,0.08);
+  }
+
+  .arsenal-icon { font-size: 2.5rem; margin-bottom: 0.8rem; display: block; }
+
+  .arsenal-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.4rem;
+  }
+
+  .arsenal-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--a-color, var(--cyan));
+    letter-spacing: 1px;
+    margin-bottom: 0.6rem;
+  }
+
+  .arsenal-caps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .a-cap {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text2);
+  }
+
+  /* ─── SPECTRUM VISUAL ─── */
+  #espectro { padding-top: 3rem; }
+
+  .spectrum-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.8rem;
+  }
+
+  .spec-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    background: var(--card);
+    transition: all 0.2s;
+  }
+
+  .spec-card:hover {
+    border-color: var(--s-color, var(--cyan));
+  }
+
+  .spec-freq {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--s-color, var(--cyan));
+    margin-bottom: 0.3rem;
+  }
+
+  .spec-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 0.2rem;
+  }
+
+  .spec-use {
+    font-size: 0.78rem;
+    color: var(--text2);
+    line-height: 1.4;
+  }
+
+  .spec-bar {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--s-color, var(--cyan));
+    margin-bottom: 0.8rem;
+    opacity: 0.4;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid rgba(0,245,255,0.1);
+    padding: 3rem 2rem;
+    text-align: center;
+  }
+
+  .footer-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--cyan);
+    letter-spacing: 4px;
+    margin-bottom: 0.5rem;
+  }
+
+  .footer-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text2);
+    letter-spacing: 2px;
+    margin-bottom: 1.5rem;
+  }
+
+  .footer-tags {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .ftag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text2);
+    letter-spacing: 1px;
+  }
+
+  .footer-copy {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text2);
+    opacity: 0.5;
+  }
+
+  /* ─── BACK TO TOP ─── */
+  .back-top {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    width: 44px; height: 44px;
+    background: rgba(0,245,255,0.1);
+    border: 1px solid var(--cyan);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--cyan);
+    font-size: 1.2rem;
+    text-decoration: none;
+    z-index: 999;
+    transition: all 0.2s;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .back-top.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .back-top:hover {
+    background: var(--cyan);
+    color: var(--bg);
+  }
+
+  /* ─── PROGRESS BAR ─── */
+  #progress-bar {
+    position: fixed;
+    top: 60px; left: 0;
+    height: 2px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+    z-index: 999;
+    transition: width 0.05s linear;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    nav { padding: 0 1rem; }
+    .nav-links { display: none; }
+    section { padding: 4rem 1rem; }
+    .tl-item { grid-template-columns: 80px 1fr; gap: 1rem; }
+    .tl-year { font-size: 1.1rem; }
+    .hero-stats { gap: 1.2rem; }
+    .stat-n { font-size: 1.5rem; }
+  }
+
+  /* ─── GLOW EFFECTS ─── */
+  .glow-cyan { text-shadow: 0 0 20px rgba(0,245,255,0.5); }
+  .glow-mag  { text-shadow: 0 0 20px rgba(255,0,110,0.5); }
+
+  /* ─── PULSE BADGE ─── */
+  .pulse {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .pulse-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100%{ box-shadow: 0 0 0 0 rgba(57,255,20,0.4); }
+    50%{ box-shadow: 0 0 0 6px rgba(57,255,20,0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div id="progress-bar"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-logo">HW//01</a>
+  <ul class="nav-links">
+    <li><a href="#glosario">GLOSARIO</a></li>
+    <li><a href="#tecnologias">TECNOLOGÍAS</a></li>
+    <li><a href="#espectro">ESPECTRO RF</a></li>
+    <li><a href="#timeline">CRONOLOGÍA</a></li>
+    <li><a href="#arsenal">ARSENAL</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-scanline"></div>
+  <div class="hero-badge">
+    <span class="pulse"><span class="pulse-dot"></span> NICASEC // CLASE 01</span>
+  </div>
+  <h1 class="hero-title">
+    <span class="c">HARDWARE</span><br>
+    <span class="m">HACKING</span>
+  </h1>
+  <p class="hero-sub">FUNDAMENTOS &amp; PROTOCOLOS</p>
+
+  <div class="hero-terminal">
+    <div class="terminal-header">
+      <div class="dot r"></div>
+      <div class="dot y"></div>
+      <div class="dot g"></div>
+      <span class="terminal-title">rogerf5@kali:~/hw-hacking</span>
+    </div>
+    <div class="t-line"><span class="t-prompt">┌──(rogerf5㉿kali)-[~/profile]</span></div>
+    <div class="t-line"><span class="t-prompt">└─$</span> cat info.txt</div>
+    <div class="t-line"><span class="t-key">[+] USER:</span> <span class="t-val">Roger F5</span></div>
+    <div class="t-line"><span class="t-key">[+] ROLE:</span> <span class="t-val">Ingeniero Ciberseguridad Ofensiva</span></div>
+    <div class="t-line"><span class="t-key">[*] CERTS:</span> <span class="t-cert">CPTE | CPEH | CCEP</span></div>
+    <div class="t-line"><span class="t-key">[*] CLASS:</span> <span class="t-val2">HW Hacking 01 — Fundamentos &amp; Glosario</span></div>
+    <div class="t-line"><span class="t-prompt">└─$</span> <span class="t-cursor"></span></div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-n" id="cntTerms">46</span><span class="stat-l">TÉRMINOS</span></div>
+    <div class="stat"><span class="stat-n">12</span><span class="stat-l">PROTOCOLOS</span></div>
+    <div class="stat"><span class="stat-n">16</span><span class="stat-l">DISPOSITIVOS</span></div>
+    <div class="stat"><span class="stat-n">55</span><span class="stat-l">AÑOS DE HX</span></div>
+  </div>
+
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span class="scroll-txt">SCROLL</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- GLOSARIO -->
+<!-- ══════════════════════════════════════ -->
+<div class="divider"></div>
+<section id="glosario">
+  <div class="section-label">01 // TERMINOLOGÍA</div>
+  <h2 class="section-title">Glosario de <span>Términos</span></h2>
+  <p class="section-desc">46 conceptos clave del hardware hacking organizados por categoría. Filtra y busca para encontrar cualquier término.</p>
+
+  <div class="glosario-controls">
+    <input class="search-box" id="searchInput" type="text" placeholder="Buscar término... (ej: UART, Replay, HID)">
+    <div class="filter-btns">
+      <button class="filter-btn active" data-cat="ALL">TODOS</button>
+      <button class="filter-btn" data-cat="RF">RF</button>
+      <button class="filter-btn" data-cat="RFID">RFID</button>
+      <button class="filter-btn" data-cat="NFC">NFC</button>
+      <button class="filter-btn" data-cat="BLE">BLE</button>
+      <button class="filter-btn" data-cat="Wi-Fi">Wi-Fi</button>
+      <button class="filter-btn" data-cat="UART">UART</button>
+      <button class="filter-btn" data-cat="JTAG">JTAG</button>
+      <button class="filter-btn" data-cat="SPI">SPI</button>
+      <button class="filter-btn" data-cat="HID">HID</button>
+      <button class="filter-btn" data-cat="Ataque">ATAQUES</button>
+      <button class="filter-btn" data-cat="Seguridad">SEGURIDAD</button>
+      <button class="filter-btn" data-cat="IoT">IoT</button>
+      <button class="filter-btn" data-cat="IA">IA/LLM</button>
+    </div>
+  </div>
+  <p class="glossary-count">Mostrando <span id="visCount">46</span> de 46 términos</p>
+  <div class="glosario-grid" id="glossaryGrid"></div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- TECNOLOGÍAS -->
+<!-- ══════════════════════════════════════ -->
+<div class="divider"></div>
+<section id="tecnologias">
+  <div class="section-label">02 // PROTOCOLOS Y VECTORES</div>
+  <h2 class="section-title">Tecnologías que se <span>Hackean</span></h2>
+  <p class="section-desc">Cada protocolo, su funcionamiento, superficie de ataque y herramientas utilizadas en auditorías autorizadas.</p>
+  <div class="tech-grid" id="techGrid"></div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- ESPECTRO RF -->
+<!-- ══════════════════════════════════════ -->
+<div class="divider"></div>
+<section id="espectro">
+  <div class="section-label">03 // RADIOFRECUENCIA</div>
+  <h2 class="section-title">Espectro <span>RF</span></h2>
+  <p class="section-desc">El rango de frecuencias relevante para auditorías de hardware: desde 125 kHz hasta 6 GHz.</p>
+  <div class="spectrum-grid" id="specGrid"></div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- TIMELINE -->
+<!-- ══════════════════════════════════════ -->
+<div class="divider"></div>
+<section id="timeline">
+  <div class="section-label">04 // HISTORIA</div>
+  <h2 class="section-title">Cronología del <span>HW Hacking</span></h2>
+  <p class="section-desc">Del phreaking de los 70s a la IA embebida en 2026: 55 años de evolución de herramientas ofensivas.</p>
+  <div class="timeline-items" id="timelineItems"></div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- ARSENAL -->
+<!-- ══════════════════════════════════════ -->
+<div class="divider"></div>
+<section id="arsenal">
+  <div class="section-label">05 // HERRAMIENTAS</div>
+  <h2 class="section-title">Arsenal de <span>Auditoría</span></h2>
+  <p class="section-desc">Dispositivos utilizados en campo para pruebas de seguridad autorizadas.</p>
+  <div class="arsenal-grid" id="arsenalGrid"></div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">NICASEC</div>
+  <div class="footer-sub">HARDWARE HACKING · CLASE 01 · ROGER F5</div>
+  <div class="footer-tags">
+    <span class="ftag">RF</span><span class="ftag">RFID</span><span class="ftag">NFC</span>
+    <span class="ftag">BLE</span><span class="ftag">Wi-Fi</span><span class="ftag">UART</span>
+    <span class="ftag">JTAG</span><span class="ftag">SPI</span><span class="ftag">I2C</span>
+    <span class="ftag">HID</span><span class="ftag">BadUSB</span><span class="ftag">Sub-GHz</span>
+    <span class="ftag">SDR</span><span class="ftag">IoT</span><span class="ftag">IA</span>
+  </div>
+  <p class="footer-copy">© 2025 Roger F5 · NICASEC · Todos los derechos reservados · Uso educativo y auditoría autorizada</p>
+</footer>
+
+<a href="#hero" class="back-top" id="backTop">↑</a>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+
+const catColors = {
+  RF:        '#00f5ff',
+  RFID:      '#ffd60a',
+  NFC:       '#ffd60a',
+  BLE:       '#39ff14',
+  'Wi-Fi':   '#39ff14',
+  UART:      '#ff6b00',
+  JTAG:      '#ff6b00',
+  SPI:       '#ff6b00',
+  I2C:       '#ff6b00',
+  GPIO:      '#ff6b00',
+  HID:       '#ff006e',
+  Ataque:    '#ff3333',
+  Seguridad: '#bf5fff',
+  IoT:       '#00b4a0',
+  IA:        '#39ff14',
+  Herramienta:'#00f5ff',
+};
+
+const terms = [
+  { cat:'RF', name:'RF', full:'Radio Frequency', desc:'Ondas electromagnéticas usadas para transmitir señales sin cable. Cubre desde kHz hasta GHz.' },
+  { cat:'RF', name:'Sub-GHz', full:'Sub-Gigahertz', desc:'Frecuencias por debajo de 1 GHz (315, 433, 868, 915 MHz). Usadas en garajes, alarmas, timbres y sensores.' },
+  { cat:'RF', name:'SDR', full:'Software Defined Radio', desc:'El procesamiento de señales de radio se hace por software en la PC, no en chips dedicados.' },
+  { cat:'RFID', name:'RFID', full:'Radio Frequency Identification', desc:'Tecnología de identificación a 125 kHz usada en tarjetas de acceso a edificios.' },
+  { cat:'NFC', name:'NFC', full:'Near Field Communication', desc:'Comunicación inalámbrica a 13.56 MHz. Usada en pagos sin contacto y credenciales modernas.' },
+  { cat:'RFID', name:'iButton', full:'1-Wire Contact Key', desc:'Llave magnética de contacto (1-Wire). Se usa en porteros, cajas registradoras y controles de rondas de seguridad.' },
+  { cat:'BLE', name:'BLE', full:'Bluetooth Low Energy', desc:'Versión de bajo consumo del protocolo Bluetooth, usada en wearables, sensores e IoT.' },
+  { cat:'BLE', name:'Deauther', full:'Deauthentication Tool', desc:'Herramienta que inyecta tramas de desautenticación 802.11 para expulsar usuarios de redes Wi-Fi (DoS inalámbrico).' },
+  { cat:'Wi-Fi', name:'Handshake', full:'EAPOL Handshake WPA', desc:'Intercambio de paquetes EAPOL entre un cliente y un AP al conectarse. Se captura para crackear contraseñas WPA offline.' },
+  { cat:'Wi-Fi', name:'PMKID', full:'Pairwise Master Key Identifier', desc:'Identificador derivado de la clave WPA2. Permite capturar material criptográfico sin esperar a que un cliente se conecte.' },
+  { cat:'Wi-Fi', name:'SSID', full:'Service Set Identifier', desc:'El nombre visible de una red Wi-Fi. Explotado en ataques Evil Twin y Karma.' },
+  { cat:'Wi-Fi', name:'WPA/WPA2', full:'Wi-Fi Protected Access', desc:'Estándar de seguridad para redes Wi-Fi. WPA2 usa AES; vulnerable a ataques de diccionario offline.' },
+  { cat:'Wi-Fi', name:'EAPOL', full:'Extensible Authentication Protocol over LAN', desc:'Protocolo del handshake WPA2 que se captura para crackear contraseñas.' },
+  { cat:'UART', name:'UART', full:'Universal Asynchronous Receiver-Transmitter', desc:'Bus serial que da acceso a la consola de administración de routers y cámaras.' },
+  { cat:'JTAG', name:'JTAG', full:'Joint Test Action Group', desc:'Bus de debug que permite acceso completo al CPU: extraer firmware, bypasear contraseñas.' },
+  { cat:'SPI', name:'SPI', full:'Serial Peripheral Interface', desc:'Bus de 4 hilos para comunicar chips. Permite dumpear la flash donde vive el firmware.' },
+  { cat:'I2C', name:'I2C', full:'Inter-Integrated Circuit', desc:'Bus de 2 hilos multi-dispositivo. Conecta sensores, EEPROMs y módulos en la misma PCB.' },
+  { cat:'GPIO', name:'GPIO', full:'General Purpose Input/Output', desc:'Pines físicos de un microcontrolador que pueden configurarse como entrada o salida digital.' },
+  { cat:'HID', name:'HID', full:'Human Interface Device', desc:'Clase USB que incluye teclados y ratones. El OS confía ciegamente en ella — vector BadUSB.' },
+  { cat:'HID', name:'BadUSB', full:'HID Keystroke Injection', desc:'Ataque donde un dispositivo USB se hace pasar por un teclado HID e inyecta comandos maliciosos en segundos.' },
+  { cat:'HID', name:'DuckyScript', full:'Keystroke Scripting Language', desc:'Lenguaje de scripting para programar ataques de keystroke injection en el USB Rubber Ducky y herramientas compatibles.' },
+  { cat:'HID', name:'Payload', full:'Attack Payload', desc:'Código o secuencia de comandos que se ejecuta en el sistema víctima. El "contenido malicioso" de un ataque.' },
+  { cat:'Ataque', name:'MitM', full:'Man-in-the-Middle', desc:'El atacante se interpone entre dos partes para interceptar o modificar el tráfico entre ellas.' },
+  { cat:'Ataque', name:'Replay', full:'Replay Attack', desc:'Capturar una señal legítima (ej. señal de garaje) y reproducirla después para realizar la misma acción.' },
+  { cat:'Ataque', name:'Rolljam', full:'Rolling Code Jam Attack', desc:'Ataque contra autos keyless: bloquea la señal del mando, la guarda, y la reproduce cuando la víctima ya no está.' },
+  { cat:'Ataque', name:'Evil Twin', full:'Rogue Access Point', desc:'AP falso que imita exactamente a una red legítima para que los dispositivos se conecten y el atacante capture el tráfico.' },
+  { cat:'Ataque', name:'Spoofing', full:'Identity Spoofing', desc:'Falsificación de identidad: GPS Spoofing (ubicación falsa), MAC Spoofing (dirección de red falsa), etc.' },
+  { cat:'Ataque', name:'Wardriving', full:'Wireless Network Mapping', desc:'Técnica de mapear redes Wi-Fi vulnerables mientras se conduce o camina, generalmente con GPS para geolocalizar.' },
+  { cat:'Ataque', name:'DoS', full:'Denial of Service', desc:'Saturar o interrumpir un servicio para que usuarios legítimos no puedan acceder a él.' },
+  { cat:'Ataque', name:'Glitching', full:'Voltage/Clock Glitching', desc:'Alterar la corriente o el reloj de un chip por microsegundos para obligarlo a saltarse verificaciones de seguridad.' },
+  { cat:'Seguridad', name:'MFA', full:'Multi-Factor Authentication', desc:'Autenticación de múltiples factores: algo que sabes + algo que tienes + algo que eres.' },
+  { cat:'Seguridad', name:'FIDO2', full:'Fast Identity Online 2', desc:'Estándar de autenticación sin contraseña basado en criptografía de llave pública. Implementado en YubiKey.' },
+  { cat:'Seguridad', name:'OTP', full:'One-Time Password', desc:'Contraseña de un solo uso generada por tiempo o por evento. Usada en Google Authenticator y YubiKey.' },
+  { cat:'Seguridad', name:'Firmware', full:'Embedded Software', desc:'Software permanente almacenado en memoria flash de un dispositivo. Controla el hardware a bajo nivel.' },
+  { cat:'Seguridad', name:'Bootloader', full:'Boot Stage 1 Loader', desc:'Primer programa que corre al encender un dispositivo. Si se compromete, el atacante controla todo lo que arranca después.' },
+  { cat:'Seguridad', name:'RoE', full:'Rules of Engagement', desc:'Reglas de compromiso que definen el alcance legal y técnico de una auditoría de seguridad.' },
+  { cat:'IoT', name:'IoT', full:'Internet of Things', desc:'Dispositivos físicos conectados a internet: cámaras, termostatos, cerraduras, routers, sensores.' },
+  { cat:'IoT', name:'Zigbee', full:'IEEE 802.15.4 Protocol', desc:'Protocolo inalámbrico de baja potencia para IoT domótico e industrial. Usado en focos inteligentes y alarmas.' },
+  { cat:'IoT', name:'LoRa', full:'Long Range Radio', desc:'Protocolo de radio de largo alcance y bajo consumo para IoT. Se usa en medidores inteligentes y rastreo.' },
+  { cat:'IoT', name:'PCB', full:'Printed Circuit Board', desc:'Placa de circuito impreso. Es el "tablero" físico donde se sueldan los chips de un dispositivo.' },
+  { cat:'IoT', name:'MCU', full:'Microcontroller Unit', desc:'Chip todo-en-uno con CPU, memoria y periféricos. Ej: ESP32, STM32, ATtiny85.' },
+  { cat:'IoT', name:'AP', full:'Access Point', desc:'Punto de acceso Wi-Fi. Puede ser legítimo o falso (Rogue AP) en ataques de Evil Twin y Karma.' },
+  { cat:'IA', name:'IA/AI', full:'Inteligencia Artificial', desc:'Sistemas que aprenden y toman decisiones. Usada en Pwnagotchi (RL) y Kode Dot (LLMs).' },
+  { cat:'IA', name:'LLM', full:'Large Language Model', desc:'Modelos de lenguaje de gran escala (GPT, Claude). Integrados en hardware como el Kode Dot.' },
+  { cat:'Herramienta', name:'Marauder', full:'ESP32 Marauder Firmware', desc:'Firmware ofensivo Wi-Fi/BLE para microcontroladores ESP32 de bajo costo (~$15-20 USD).' },
+  { cat:'Ataque', name:'C2/C&C', full:'Command & Control', desc:'Servidor desde el que el atacante envía comandos a dispositivos comprometidos o implantes.' },
+];
+
+const technologies = [
+  {
+    icon:'📡', name:'RFID', freq:'125 kHz', cat:'INALÁMBRICO / RF', accent:'#ffd60a',
+    what:'Tecnología de identificación por radiofrecuencia que opera a 125 kHz. Un lector emite un campo electromagnético que activa una tarjeta pasiva sin batería y lee su ID único. La comunicación es unidireccional y en texto plano — sin cifrado en la gran mayoría de implementaciones.',
+    uses:['Tarjetas de acceso a edificios y oficinas','Control de estacionamientos y barreras','Intercomunicadores de apartamentos','Tarjetas de fichaje laboral (EM4100, HID Prox)','Control de rondas de guardias de seguridad'],
+    tools:'Flipper Zero · Proxmark3 · ChameleonMini · Antenas RFID Arduino',
+    impact:'Un atacante puede leer tu tarjeta silenciosamente al pasar cerca (< 10 cm) y clonarla en segundos. La mayoría tienen 0 cifrado — su ID es todo lo que se necesita para duplicarlas.'
+  },
+  {
+    icon:'💳', name:'NFC', freq:'13.56 MHz', cat:'INALÁMBRICO / RF', accent:'#ffd60a',
+    what:'Estándar de comunicación inalámbrica de corto alcance (< 4 cm) a 13.56 MHz. NFC es bidireccional y puede soportar cifrado (AES, DES3). Los protocolos más comunes son Mifare Classic (PRNG débil), NTAG21x y DESFire EV1/EV2.',
+    uses:['Pagos sin contacto (tarjetas bancarias y smartphones)','Tarjetas de transporte público (metro, bus)','Credenciales corporativas modernas','Amiibos de Nintendo','Llaves de hoteles y hospitales'],
+    tools:'Flipper Zero · Proxmark3 · Android NFC + MCT · ChameleonMini · ACR122U',
+    impact:'Clonación de tarjeta de transporte para viajes gratis. Extracción de claves Mifare Classic para clonar accesos corporativos. En tarjetas bancarias: lectura del número de tarjeta desde la cartera.'
+  },
+  {
+    icon:'📻', name:'Sub-GHz', freq:'315 / 433 / 868 / 915 MHz', cat:'RADIOFRECUENCIA', accent:'#ff6b00',
+    what:'Rango de radiofrecuencias usado masivamente en dispositivos inalámbricos cotidianos. La mayoría de dispositivos transmiten señales en texto plano o con códigos fijos sin autenticación.',
+    uses:['Controles de apertura de puertas de garaje','Barreras y plumas de estacionamiento','Sistemas de alarma para casas y autos','Sensores de presión de neumáticos (TPMS)','Sensores meteorológicos y de gas','Mandos de portones y cercos eléctricos'],
+    tools:'Flipper Zero · HackRF One · RTL-SDR · ESP32 Marauder · Minino',
+    impact:'Replay Attack: capturar y reproducir señal de control remoto para abrir garajes. Rolljam Attack: interceptar y bloquear la señal original guardándola para uso posterior — abre autos con keyless entry.'
+  },
+  {
+    icon:'🦷', name:'Bluetooth & BLE', freq:'2.4 GHz', cat:'INALÁMBRICO', accent:'#39ff14',
+    what:'Protocolo inalámbrico de corto alcance. BLE usa advertising packets para anunciarse, lo que permite rastreo y spam sin emparejamiento previo. Bluetooth Classic (BR/EDR) se usa para audio y datos.',
+    uses:['Auriculares y altavoces inalámbricos','Ratones y teclados sin cable','Smartwatches y pulseras fitness','Apple AirPods / AirTags','Cerraduras inteligentes y IoT del hogar','Sensores médicos (glucómetros, monitores)'],
+    tools:'Flipper Zero · ESP32 Marauder · M5StickC Plus 2 (Bruce/Nemo) · Ubertooth One · Minino',
+    impact:'BLE Spam: inundar iPhones con notificaciones falsas que bloquean el celular. Emular teclados BLE para keystroke injection sin cable. Sniffing de teclados Bluetooth sin cifrado (captura de contraseñas).'
+  },
+  {
+    icon:'📶', name:'Wi-Fi', freq:'2.4 GHz / 5 GHz — IEEE 802.11', cat:'INALÁMBRICO / LAN', accent:'#39ff14',
+    what:'Estándar IEEE 802.11 para redes de área local inalámbricas. WPA2 es el estándar actual; WPA3 es más seguro pero aún no universal. La autenticación usa handshakes EAPOL que pueden capturarse.',
+    uses:['Redes domésticas (router + dispositivos del hogar)','Wi-Fi empresarial (redes corporativas)','Hotspots públicos (cafés, aeropuertos, hoteles)','IoT: cámaras, impresoras, smart TVs','Redes de invitados en empresas'],
+    tools:'ESP32 Marauder · Wi-Fi Pineapple · Alfa Network AWUS036ACH · Flipper Zero + Devboard · Pwnagotchi · Aircrack-ng / Hashcat',
+    impact:'Deauth Attack: desconectar a todos los usuarios de una red (DoS). Captura de handshake WPA2 para crackeo offline. Evil Twin: crear una red falsa idéntica y robar credenciales con portal cautivo.'
+  },
+  {
+    icon:'🔧', name:'UART', freq:'Bus Serial Asíncrono', cat:'HARDWARE / BUS', accent:'#ff6b00',
+    what:'Protocolo de comunicación serial asíncrono punto a punto con solo 3 pines: TX (transmit), RX (receive) y GND (tierra). Es el "puerto serie" clásico de los sistemas embebidos y la forma más común de acceder a consolas de administración en routers y cámaras.',
+    uses:['Consola serial de administración en routers','Debug de cámaras IP y grabadoras DVR','Arduino y Raspberry Pi (puerto serial)','GPS modules y módulos GSM/SIM','Sensores IoT industriales (Modbus RTU)','Impresoras de recibos y cajeros automáticos'],
+    tools:'Flipper Zero · Adaptadores USB-UART (CH340, CP2102, FTDI232) · Logic Analyzer · Screen / Minicom / PuTTY · BusPirate',
+    impact:'Acceso a shell root de un router o cámara IP sin contraseña (boot log expone credenciales). Extracción del sistema de archivos completo. Inyección de comandos antes del arranque del OS.'
+  },
+  {
+    icon:'🔬', name:'JTAG', freq:'IEEE 1149.1 — Debug & Programming', cat:'HARDWARE / DEBUG', accent:'#ff006e',
+    what:'Estándar IEEE 1149.1 diseñado para testeo de PCBs. Evolucionó al principal bus de debugging. Permite acceso completo al CPU en pausa: lectura/escritura de registros, memoria RAM, flash, y control del flujo de ejecución instrucción por instrucción.',
+    uses:['Programación de microcontroladores en fábrica','Debugging de firmware en desarrollo','Reparación de routers con firmware corrupto','Grabación de BIOS/UEFI en placas madre','Programación de FPGAs y CPLDs','Consolas de videojuegos (modchips históricos)'],
+    tools:'OpenOCD + JLink / ST-Link / FTDI · Flashrom · BusPirate · JTAGulator · Segger JLink · GDB remoto',
+    impact:'Extracción completa del firmware cifrado directamente desde la memoria flash. Bypass de contraseñas de bootloader (U-Boot, GRUB). Extracción de claves criptográficas de la RAM durante ejecución.'
+  },
+  {
+    icon:'💾', name:'SPI', freq:'Bus Síncrono 4 Hilos — Alta Velocidad', cat:'HARDWARE / BUS', accent:'#ff6b00',
+    what:'Protocolo full-duplex con 4 pines: MOSI, MISO, CLK y CS/SS. Es el bus estándar para comunicación entre un microcontrolador y chips de memoria flash (donde se almacena el firmware), displays, sensores y módulos de radio.',
+    uses:['Chips de memoria Flash del firmware de routers','EEPROMs que guardan configuraciones','Pantallas TFT y OLED en dispositivos embebidos','Módulos de radio (CC1101, nRF24L01)','BIOS/UEFI en chips de placa madre'],
+    tools:'Flashrom + CH341A · Bus Pirate · Flipper Zero · Raspberry Pi GPIO · binwalk / unblob',
+    impact:'Dumping completo del firmware desde el chip flash sin desmontarlo (clips SOIC8). Extracción de claves API, contraseñas hardcodeadas y certificados. Extracción de BIOS para bypasear contraseñas UEFI.'
+  },
+  {
+    icon:'⚙️', name:'I2C', freq:'Bus Síncrono 2 Hilos — Multi-dispositivo', cat:'HARDWARE / BUS', accent:'#ff6b00',
+    what:'Protocolo serial síncrono de dos hilos: SDA (datos) y SCL (reloj). Bus multi-dispositivo donde varios chips comparten los mismos 2 cables, cada uno con su propia dirección de 7 bits. Velocidades: 100 kHz (standard), 400 kHz (fast), 1 MHz (fast+).',
+    uses:['Sensores de temperatura, humedad, presión (IoT/wearables)','Pantallas OLED pequeñas (SSD1306)','EEPROMs de configuración en TVs y monitores','Acelerómetros y giroscopios (MPU-6050)','Relojes de tiempo real (RTC)'],
+    tools:'Bus Pirate · Flipper Zero GPIO · Raspberry Pi i2c-tools · Logic Analyzer (Sigrok/PulseView) · i2cdump / i2cget',
+    impact:'Lectura de EEPROMs para extraer contraseñas y tokens en texto plano. Modificación de parámetros de sensores para falsificar lecturas en sistemas industriales. Acceso a datos biométricos en wearables.'
+  },
+  {
+    icon:'⌨️', name:'HID & BadUSB', freq:'USB Human Interface Device', cat:'INTERFAZ FÍSICA', accent:'#ff006e',
+    what:'HID es la clase USB que engloba teclados, ratones y gamepads. El SO confía ciegamente en todo dispositivo que se identifique como HID. BadUSB explota esto: un dispositivo se anuncia como teclado HID y "teclea" comandos a velocidad sobrehumana antes de que el usuario pueda reaccionar.',
+    uses:['Teclados y ratones USB convencionales','Gamepads y joysticks','Lectores de códigos de barras','Paneles táctiles y lápices digitales','Lectores de tarjetas y tokens de seguridad'],
+    tools:'USB Rubber Ducky · Bash Bunny · O.MG Cable · Flipper Zero BadUSB · M5StickC Plus 2 (Bruce) · Digispark ATtiny85',
+    impact:'En < 3 segundos: abrir PowerShell oculto, descargar malware, deshabilitar Windows Defender, exfiltrar hashes NTLM, robar contraseñas del navegador. El antivirus no puede reaccionar a tiempo — es "solo un teclado".'
+  },
+  {
+    icon:'🌐', name:'RF / SDR', freq:'1 MHz — 6 GHz (Espectro completo)', cat:'ESPECTRO RADIO', accent:'#00f5ff',
+    what:'Software Defined Radio: el procesamiento de señales de radio se hace por software en la PC, no en chips dedicados. El HackRF One cubre 1 MHz a 6 GHz, permitiendo analizar prácticamente cualquier señal de radio con el mismo hardware.',
+    uses:['GPS (1575 MHz) en celulares y autos','GSM/4G/5G (700 MHz – 3.5 GHz)','ADS-B: transponders de aviones','ACARS: comunicaciones aeronáuticas','Estaciones meteorológicas e IoT industrial','Mandos de autos keyless'],
+    tools:'HackRF One (TX+RX) · RTL-SDR (RX) · GNU Radio · URH Universal Radio Hacker · GQRX / SDR#',
+    impact:'GPS Spoofing: falsificar la ubicación de drones, autos y celulares. Rolljam contra autos keyless. Intercepción de comunicaciones no cifradas (pagers hospitalarios, POCSAG). Jamming localizado.'
+  },
+  {
+    icon:'🔌', name:'Ethernet & HDMI', freq:'Capa Física de Red / Video', cat:'RED FÍSICA', accent:'#bf5fff',
+    what:'La capa física de la red (cable Ethernet) y la señal de video (HDMI) son vectores físicos frecuentemente ignorados en auditorías. Un implante físico de red puede pasar completamente desapercibido durante meses.',
+    uses:['Cables Ethernet en oficinas y data centers','Switches y puntos de acceso en redes LAN','Monitores y proyectores conectados por HDMI','Kioscos y terminales de pago','Cámaras de seguridad con cable de red'],
+    tools:'LAN Turtle · Packet Squirrel · Screen Crab · Responder · Ettercap / Bettercap',
+    impact:'LAN Turtle: acceso remoto permanente vía SSH reverso. Captura silenciosa de tráfico durante semanas. Screen Crab: captura de pantallas del usuario cada X segundos, transmitidas por Wi-Fi al atacante.'
+  },
+];
+
+const spectrumData = [
+  { freq:'125 kHz', name:'RFID LF', use:'Tarjetas de acceso a edificios. Sin cifrado. Clonación inmediata.', color:'#ffd60a', width:'10%' },
+  { freq:'13.56 MHz', name:'NFC / RFID HF', use:'Pagos, transporte, credenciales. Mifare Classic vulnerable.', color:'#ffd60a', width:'15%' },
+  { freq:'315 MHz', name:'Sub-GHz US', use:'Controles de garaje, autos keyless (EE.UU. y Asia).', color:'#ff6b00', width:'35%' },
+  { freq:'433.92 MHz', name:'Sub-GHz EU/LATAM', use:'Alarmas, timbres, sensores. Muy común en LATAM.', color:'#ff6b00', width:'43%' },
+  { freq:'868 MHz', name:'LoRa / IoT EU', use:'IoT industrial, medidores inteligentes, LoRaWAN.', color:'#00b4a0', width:'50%' },
+  { freq:'915 MHz', name:'Sub-GHz IoT US', use:'IoT industrial norteamericano, Sigfox, Z-Wave.', color:'#00b4a0', width:'52%' },
+  { freq:'1575 MHz', name:'GPS L1', use:'Localización satelital. Vulnerable a GPS Spoofing con HackRF.', color:'#00f5ff', width:'60%' },
+  { freq:'2.4 GHz', name:'Wi-Fi / BLE', use:'Redes WiFi, Bluetooth, ZigBee. El más auditado.', color:'#39ff14', width:'72%' },
+  { freq:'5 GHz', name:'Wi-Fi 5/6', use:'WiFi 802.11ac/ax. Mayor velocidad, menor alcance.', color:'#39ff14', width:'80%' },
+  { freq:'1–6 GHz', name:'SDR HackRF', use:'Cobertura total con HackRF One. Análisis de espectro completo.', color:'#00f5ff', width:'95%' },
+];
+
+const timeline = [
+  {
+    year:'1970s', device:'Blue Box', subtitle:'El Origen del Phreaking', era:'ERA PHREAKING',
+    color:'#bf5fff',
+    desc:'Dispositivo que generaba tonos de 2600 Hz + DTMF para manipular las centrales telefónicas de AT&T. Primer ejemplo documentado de explotación de sistemas de comunicaciones mediante hardware casero.',
+    caps:['2600 Hz Tone','DTMF Sequences','Phreaking','AT&T Trunk Control'],
+    creator:'John Draper "Cap\'n Crunch" · Steve Wozniak · Steve Jobs'
+  },
+  {
+    year:'2007', device:'Proxmark3', subtitle:'El Bisturí del RFID', era:'ERA SDR & RFID',
+    color:'#ffd60a',
+    desc:'Plataforma de investigación RFID open-source. Primer dispositivo que permitió ataques "nested attack" contra Mifare Classic, usado en millones de tarjetas de metro, hoteles y accesos corporativos.',
+    caps:['LF 125 kHz','HF 13.56 MHz','Sniff Mode','Emulation','FPGA'],
+    creator:'Jonathan Westhues — Investigador independiente'
+  },
+  {
+    year:'2008', device:'Wi-Fi Pineapple', subtitle:'El Estándar de Auditoría Inalámbrica', era:'ERA SDR & RFID',
+    color:'#ff6b00',
+    desc:'Router de auditoría inalámbrica especializado que automatiza ataques Rogue AP y MitM. Explota la confianza de los dispositivos en los SSIDs almacenados.',
+    caps:['Evil Twin','Karma Attack','SSL Strip','DNS Spoof','Evil Portal'],
+    creator:'Hak5 — Darren Kitchen'
+  },
+  {
+    year:'2010', device:'USB Rubber Ducky', subtitle:'El Pionero del Keystroke Injection', era:'ERA HID',
+    color:'#ffd60a',
+    desc:'Primera herramienta comercial de keystroke injection. Se disfraza de memoria USB pero el OS la reconoce como teclado HID. Velocidad: > 1000 palabras por minuto.',
+    caps:['HID Emulation','DuckyScript','MicroSD','> 1000 WPM','BadUSB'],
+    creator:'Hak5'
+  },
+  {
+    year:'2011', device:'Ubertooth One', subtitle:'El Bisturí del Bluetooth', era:'ERA HID',
+    color:'#39ff14',
+    desc:'Primer dispositivo accesible para captura y análisis a bajo nivel de paquetes Bluetooth (BR/EDR y BLE). Antes requería equipos de $50,000+ USD.',
+    caps:['BT Classic Sniff','BLE Sniff','Advertising Packets','Wireshark Compatible'],
+    creator:'Michael Ossmann — Great Scott Gadgets'
+  },
+  {
+    year:'2014', device:'HackRF One', subtitle:'El Dominio del Espectro de Radio', era:'ERA RF AVANZADO',
+    color:'#00f5ff',
+    desc:'Transceptor SDR half-duplex 1 MHz — 6 GHz. Democratizó la investigación en RF que antes requería equipos de $50,000+ USD. Open Source Hardware.',
+    caps:['1 MHz – 6 GHz','TX + RX','20 MSPS','GNU Radio','Open Source HW'],
+    creator:'Michael Ossmann — Great Scott Gadgets'
+  },
+  {
+    year:'2015', device:'LAN Turtle', subtitle:'El Implante de Red Invisible', era:'ERA IOT',
+    color:'#00b4a0',
+    desc:'Implante físico de red con factor de forma USB-Ethernet. Factor de forma idéntico a un adaptador genérico. Establecimiento de canales de acceso remoto persistentes.',
+    caps:['AutoSSH','Metasploit','DNS Spoof','OpenWRT','Reverse Shell'],
+    creator:'Hak5'
+  },
+  {
+    year:'2015', device:'ChameleonMini', subtitle:'El Camaleón de las Tarjetas RFID', era:'ERA IOT',
+    color:'#ffd60a',
+    desc:'Dispositivo de emulación de tarjetas RFID HF diseñado para emulación activa en campo, siendo más compacto que el Proxmark3 y orientado a Red Team.',
+    caps:['ISO 14443 Emulation','8 Card Profiles','Sniffing','Key Extraction','BT + USB'],
+    creator:'Kasper & Oswald — Alemania'
+  },
+  {
+    year:'2017', device:'Bash Bunny', subtitle:'La Plataforma Multivector USB', era:'ERA POST-2017',
+    color:'#ff006e',
+    desc:'Plataforma USB de ataque multivector que emula simultáneamente teclado HID, almacenamiento USB y adaptador de red Ethernet. Corre un SO Linux completo.',
+    caps:['HID + Ethernet + Storage','Linux OS','Python/Bash/Ruby','3-Switch Payload','Multivector'],
+    creator:'Hak5'
+  },
+  {
+    year:'2017', device:'ESP8266 Deauther', subtitle:'DoS Inalámbrico por $5 USD', era:'ERA POST-2017',
+    color:'#39ff14',
+    desc:'Firmware para ESP8266 que inyecta tramas de desautenticación 802.11. Demostró que un exploit masivo de Wi-Fi era posible con hardware de $5 USD. Aceleró la adopción de 802.11w.',
+    caps:['Deauth Flood','Beacon Spam','Probe Attack','Web Interface','$5 USD HW'],
+    creator:'Spacehuhn (Stefan Kremser) — Open Source'
+  },
+  {
+    year:'2019', device:'O.MG Cable', subtitle:'El Cable que Hackea', era:'ERA IOT AVANZADO',
+    color:'#bf5fff',
+    desc:'Cable USB aparentemente normal con implante HID y servidor Wi-Fi embebido. Causó pánico en DEF CON 2019. El atacante lo activa remotamente desde 30+ metros.',
+    caps:['HID Implant','Wi-Fi C2','DuckyScript','Keystroke Injection','Factor USB-A/Lightning'],
+    creator:'MG (Mike Grover) — Vendido por Hak5'
+  },
+  {
+    year:'2019', device:'Pwnagotchi', subtitle:'El Tamagotchi que Hackea Wi-Fi', era:'ERA IOT AVANZADO',
+    color:'#00f5ff',
+    desc:'Primera herramienta de seguridad que usa Reinforcement Learning (A2C). Aprende autónomamente qué rutas maximizan la captura de handshakes WPA. Ganó DEF CON 2019.',
+    caps:['Reinforcement Learning','A2C Algorithm','PMKID Capture','e-ink Display','.pcap Export'],
+    creator:'Simone Margaritelli (evilsocket) — Open Source'
+  },
+  {
+    year:'2019', device:'ESP32 Marauder', subtitle:'Guerra Electrónica de Bolsillo', era:'ERA IOT AVANZADO',
+    color:'#ff6b00',
+    desc:'Firmware ofensivo para ESP32 que centraliza ataques Wi-Fi y BLE en dispositivos de $15-20 USD. Compatible con Flipper Zero + WiFi Devboard.',
+    caps:['Deauth Wi-Fi','WPA2 Handshake','BLE Spam Apple/Android','Beacon Flood','Monitor Mode'],
+    creator:'JustCallMeKoko — Open Source'
+  },
+  {
+    year:'2020', device:'Flipper Zero', subtitle:'La Navaja Suiza del HW Hacking', era:'ERA IA/IOT',
+    color:'#00f5ff',
+    desc:'Multiherramienta portátil basada en STM32. Tiene un delfín virtual que "sube de nivel" con cada captura. Fue prohibido temporalmente en Canadá (2023) por supuesto uso en robo de autos.',
+    caps:['Sub-GHz 300–928 MHz','RFID 125 kHz','NFC 13.56 MHz','IR Universal','BadUSB','GPIO/UART/SPI/I2C'],
+    creator:'Pavel Zhovner — Flipper Devices'
+  },
+  {
+    year:'2021', device:'Cat Sniffer', subtitle:'El Especialista en IoT Industrial', era:'ERA IA/IOT',
+    color:'#00b4a0',
+    desc:'Primer hardware de seguridad ofensiva de origen latinoamericano con reconocimiento internacional. Diseñado en México por Electronic Cats para auditoría IoT multiprotocolo.',
+    caps:['LoRa','Zigbee','Thread','Matter','BLE','Wireshark Compatible','Open Source HW'],
+    creator:'Electronic Cats — México'
+  },
+  {
+    year:'2024', device:'Minino', subtitle:'La Navaja Suiza del IoT Ofensivo', era:'ERA IA/IOT',
+    color:'#ff6b00',
+    desc:'Plataforma ESP32-C6 con GPS integrado. Primer dispositivo que integra Wi-Fi 6 (802.11ax), GPS y captura autónoma en un form factor de bolsillo.',
+    caps:['Wi-Fi 6 (802.11ax)','BLE 5','Zigbee','GPS Wardriving','BLE AirTag Clone','microSD'],
+    creator:'Electronic Cats + PwnLabs — México'
+  },
+  {
+    year:'2025/26', device:'Kode Dot', subtitle:'La Era de la IA en el HW Hacking', era:'ERA IA NATIVA',
+    color:'#bf5fff',
+    desc:'Primera herramienta de hardware hacking con IA integrada de forma nativa en el dispositivo. Sistema operativo propio (KodeOS) con gestor de módulos y arquitectura de payloads modular.',
+    caps:['ESP32-S3','LLM / IA Nativa','KodeOS','Wi-Fi Dual Band','Módulos Acoplables'],
+    creator:'Kode DIY — España'
+  },
+];
+
+const arsenalDevices = [
+  { icon:'🐬', name:'Flipper Zero', type:'MULTIHERRAMIENTA', color:'#00f5ff', caps:['Sub-GHz','RFID','NFC','IR','BadUSB','GPIO'] },
+  { icon:'🦆', name:'Rubber Ducky', type:'HID INJECTION', color:'#ffd60a', caps:['KeystrokeInject','DuckyScript','HID Emulation'] },
+  { icon:'📡', name:'HackRF One', type:'SDR TX/RX', color:'#00f5ff', caps:['1MHz–6GHz','TX+RX','GNU Radio'] },
+  { icon:'🍍', name:'Wi-Fi Pineapple', type:'ROGUE AP', color:'#ff6b00', caps:['Evil Twin','Karma','SSL Strip'] },
+  { icon:'🐢', name:'LAN Turtle', type:'NETWORK IMPLANT', color:'#00b4a0', caps:['AutoSSH','Metasploit','Reverse Shell'] },
+  { icon:'🐰', name:'Bash Bunny', type:'MULTIVECTOR USB', color:'#ff006e', caps:['HID+NET+Storage','Linux OS','Multivector'] },
+  { icon:'🐙', name:'O.MG Cable', type:'CABLE IMPLANT', color:'#bf5fff', caps:['WiFi C2','HID','Payload Delivery'] },
+  { icon:'📻', name:'RTL-SDR', type:'SDR RECEPTOR', color:'#39ff14', caps:['RX Only','Spectrum Analysis','Low Cost'] },
+  { icon:'🔬', name:'Proxmark3', type:'RFID ANALYZER', color:'#ffd60a', caps:['LF + HF','Clone','Emulate','Sniff'] },
+  { icon:'📡', name:'Alfa Network', type:'WI-FI ADAPTER', color:'#39ff14', caps:['Monitor Mode','Packet Injection','Long Range'] },
+  { icon:'🦎', name:'ChameleonMini', type:'RFID EMULATOR', color:'#ffd60a', caps:['HF Emulation','8 Profiles','Key Extract'] },
+  { icon:'🐾', name:'Ubertooth One', type:'BT ANALYZER', color:'#39ff14', caps:['BT Classic','BLE Sniff','Wireshark'] },
+  { icon:'🕹️', name:'ESP32 Marauder', type:'WI-FI / BLE', color:'#ff6b00', caps:['Deauth','BLE Spam','Handshake Capture'] },
+  { icon:'🐱', name:'Cat Sniffer', type:'IOT ANALYZER', color:'#00b4a0', caps:['LoRa','Zigbee','Thread','Matter'] },
+  { icon:'🐈', name:'Minino', type:'IOT FIELD OPS', color:'#00b4a0', caps:['Wi-Fi 6','GPS','BLE 5','Zigbee'] },
+  { icon:'🤖', name:'Kode Dot', type:'AI PLATFORM', color:'#bf5fff', caps:['IA Nativa','KodeOS','Dual Band','Módulos'] },
+];
+
+// ══════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ══════════════════════════════════════════════
+
+function renderGlossary() {
+  const grid = document.getElementById('glossaryGrid');
+  grid.innerHTML = terms.map((t, i) => {
+    const color = catColors[t.cat] || '#00f5ff';
+    return `
+    <div class="term-card" data-cat="${t.cat}" data-name="${t.name.toLowerCase()} ${t.full ? t.full.toLowerCase() : ''} ${t.desc.toLowerCase()}" style="--cat-color:${color}; animation-delay:${i * 0.02}s">
+      <div class="term-cat">${t.cat}</div>
+      <div class="term-name">${t.name}</div>
+      ${t.full ? `<div class="term-full">${t.full}</div>` : ''}
+      <div class="term-desc">${t.desc}</div>
+    </div>`;
+  }).join('');
+}
+
+function filterGlossary() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const activeCat = document.querySelector('.filter-btn.active')?.dataset.cat || 'ALL';
+  const cards = document.querySelectorAll('.term-card');
+  let visible = 0;
+  cards.forEach(card => {
+    const matchCat = activeCat === 'ALL' || card.dataset.cat === activeCat;
+    const matchSearch = !search || card.dataset.name.includes(search);
+    const show = matchCat && matchSearch;
+    card.classList.toggle('hidden', !show);
+    if (show) visible++;
+  });
+  document.getElementById('visCount').textContent = visible;
+}
+
+function renderTechs() {
+  const grid = document.getElementById('techGrid');
+  grid.innerHTML = technologies.map(t => `
+    <div class="tech-card" style="--accent:${t.accent}">
+      <div class="tech-header">
+        <div class="tech-icon">${t.icon}</div>
+        <div class="tech-header-info">
+          <div class="tech-category">${t.cat}</div>
+          <div class="tech-name">${t.name}</div>
+          <div class="tech-freq">${t.freq}</div>
+        </div>
+      </div>
+      <div class="tech-body">
+        <div class="tech-section-label">// QUÉ ES</div>
+        <p class="tech-what">${t.what}</p>
+        <div class="tech-section-label">// USO EN VIDA DIARIA</div>
+        <ul class="tech-uses">${t.uses.map(u => `<li>${u}</li>`).join('')}</ul>
+        <div class="tech-section-label">// HERRAMIENTAS</div>
+        <div class="tech-tools">${t.tools.split(' · ').map(tool => `<span class="tool-name">${tool}</span>`).join(' &nbsp;·&nbsp; ')}</div>
+        <div class="tech-impact">
+          <div class="tech-impact-label">⚠ IMPACTO / QUÉ PUEDE PASAR</div>
+          ${t.impact}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderSpectrum() {
+  const grid = document.getElementById('specGrid');
+  grid.innerHTML = spectrumData.map(s => `
+    <div class="spec-card" style="--s-color:${s.color}">
+      <div class="spec-bar" style="width:${s.width}"></div>
+      <div class="spec-freq">${s.freq}</div>
+      <div class="spec-name">${s.name}</div>
+      <div class="spec-use">${s.use}</div>
+    </div>
+  `).join('');
+}
+
+function renderTimeline() {
+  const container = document.getElementById('timelineItems');
+  container.innerHTML = timeline.map(t => `
+    <div class="tl-item" style="--tl-color:${t.color}">
+      <div class="tl-year-block">
+        <span class="tl-year">${t.year}</span>
+        <div class="tl-era">${t.era}</div>
+      </div>
+      <div class="tl-card">
+        <div class="tl-device">${t.device}</div>
+        <div class="tl-subtitle">${t.subtitle}</div>
+        <div class="tl-desc">${t.desc}</div>
+        <div class="tl-caps">${t.caps.map(c => `<span class="tl-cap">${c}</span>`).join('')}</div>
+        <div class="tl-creator">BY <span>${t.creator}</span></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderArsenal() {
+  const grid = document.getElementById('arsenalGrid');
+  grid.innerHTML = arsenalDevices.map(a => `
+    <div class="arsenal-card" style="--a-color:${a.color}">
+      <span class="arsenal-icon">${a.icon}</span>
+      <div class="arsenal-name">${a.name}</div>
+      <div class="arsenal-type">${a.type}</div>
+      <div class="arsenal-caps">${a.caps.map(c => `<span class="a-cap">${c}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+// EVENTS & INIT
+// ══════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderGlossary();
+  renderTechs();
+  renderSpectrum();
+  renderTimeline();
+  renderArsenal();
+
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterGlossary();
+    });
+  });
+
+  // Search
+  document.getElementById('searchInput').addEventListener('input', filterGlossary);
+
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+    document.getElementById('progress-bar').style.width = scrolled + '%';
+
+    const backTop = document.getElementById('backTop');
+    backTop.classList.toggle('visible', window.scrollY > 500);
+  });
+});
+</script>
+</body>
+</html>
