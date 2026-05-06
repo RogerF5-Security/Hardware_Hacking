@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directorio - Fundamentos de Hardware Hacking</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            font-size: 1.1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #searchInput:focus {
+            border-color: var(--accent);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .category-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-card h2 {
+            margin-top: 0;
+            color: var(--accent);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+        }
+
+        li:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.05rem;
+            display: block;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--accent-hover);
+        }
+
+        .description {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            font-weight: normal;
+        }
+
+        .tags {
+            display: inline-block;
+            font-size: 0.75rem;
+            background: var(--bg-color);
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-top: 8px;
+            color: var(--accent);
+            border: 1px solid var(--border);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Directorio de Hardware Hacking</h1>
+        <p class="subtitle">Recursos, Payloads y Firmwares para Auditoría Ofensiva</p>
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Buscar herramientas, payloads, firmwares, foros...">
+    </div>
+
+    <div class="grid-container" id="directory">
+
+        <!-- FLIPPER ZERO -->
+        <section class="category-card">
+            <h2>Flipper Zero</h2>
+            <ul>
+                <li class="link-item">
+                    <a href="https://docs.flipperzero.one/" target="_blank">Documentación Oficial Flipper Zero</a>
+                    <span class="description">Guías oficiales de uso, especificaciones de hardware y desarrollo de aplicaciones.</span>
+                    <span class="tags">Oficial, Docs, Hardware</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://github.com/djsime1/awesome-flipperzero" target="_blank">Awesome Flipper Zero (GitHub)</a>
+                    <span class="description">La colección más grande de recursos, scripts y herramientas creadas por la comunidad.</span>
+                    <span class="tags">GitHub, Repositorio, Tools</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://github.com/DarkFlippers/unleashed-firmware" target="_blank">Unleashed Firmware</a>
+                    <span class="description">Firmware alternativo enfocado en eliminar restricciones regionales (Sub-GHz) e integrar herramientas ofensivas.</span>
+                    <span class="tags">Firmware, Sub-GHz, Modding</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://github.com/UberGuidoZ/Flipper" target="_blank">Repositorio de UberGuidoZ</a>
+                    <span class="description">Base de datos masiva de payloads: NFC, RFID, Sub-GHz, BadUSB y archivos IR.</span>
+                    <span class="tags">Payloads, IR, BadUSB, RFID</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- M5STACK & ESP32 -->
+        <section class="category-card">
+            <h2>M5StickC Plus 2 & ESP32</h2>
+            <ul>
+                <li class="link-item">
+                    <a href="https://docs.m5stack.com/en/core/m5stickc_plus2" target="_blank">M5StickC Plus 2 (Docs)</a>
+                    <span class="description">Documentación técnica, esquemáticos y pinout del dispositivo.</span>
+                    <span class="tags">Oficial, Docs, Hardware</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://github.com/justcallmecoco/esp32marauder" target="_blank">ESP32 Marauder</a>
+                    <span class="description">Suite ofensiva para auditoría Wi-Fi y Bluetooth (Sniffing, Deauth, Wardriving).</span>
+                    <span class="tags">Firmware, Wi-Fi, BLE, Wardriving</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://github.com/pr3y/Bruce" target="_blank">Bruce Firmware (para M5StickC)</a>
+                    <span class="description">Firmware multipropósito diseñado específicamente para la serie M5Stick, con utilidades de red y RF.</span>
+                    <span class="tags">Firmware, M5Stick, Network</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://github.com/m5stack/M5-ProductExampleCodes" target="_blank">M5Stack Example Codes</a>
+                    <span class="description">Código fuente oficial para entender la integración de sensores e interfaces gráficas en MicroPython/C++.</span>
+                    <span class="tags">Código, Desarrollo, C++, Python</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- HAK5 ECOSYSTEM -->
+        <section class="category-card">
+            <h2>Ecosistema Hak5</h2>
+            <ul>
+                <li class="link-item">
+                    <a href="https://docs.hak5.org/" target="_blank">Hak5 Documentation</a>
+                    <span class="description">Wiki oficial para configuración de WiFi Pineapple, USB Rubber Ducky, Bash Bunny y LAN Turtle.</span>
+                    <span class="tags">Oficial, Docs, Hak5</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://github.com/hak5/usbrubberducky-payloads" target="_blank">Oficial USB Rubber Ducky Payloads</a>
+                    <span class="description">Directorio de payloads en DuckyScript clasificados por OS (Windows, macOS, Linux) para ejecución de comandos e inyección de teclas.</span>
+                    <span class="tags">Payloads, DuckyScript, HID</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://github.com/hak5/bashbunny-payloads" target="_blank">Bash Bunny Payloads</a>
+                    <span class="description">Scripts de post-explotación, exfiltración y ataques de red locales vía interfaz Ethernet/Serial emulada.</span>
+                    <span class="tags">Payloads, Exfiltration, Network</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://forums.hak5.org/" target="_blank">Foros de la Comunidad Hak5</a>
+                    <span class="description">El principal punto de encuentro para resolver dudas de DuckyScript, Pineapple modules y troubleshooting de hardware.</span>
+                    <span class="tags">Foro, Comunidad, Troubleshooting</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- RFID, SDR & GENERAL -->
+        <section class="category-card">
+            <h2>RFID, SDR y Comunidades</h2>
+            <ul>
+                <li class="link-item">
+                    <a href="https://github.com/RfidResearchGroup/proxmark3" target="_blank">Proxmark3 (RfidResearchGroup)</a>
+                    <span class="description">El firmware "Iceman", el estándar de la industria para clonación, análisis y cracking de RFID/NFC.</span>
+                    <span class="tags">RFID, NFC, Proxmark3, Cracking</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://greatscottgadgets.com/hackrf/one/" target="_blank">HackRF One (Great Scott Gadgets)</a>
+                    <span class="description">Recursos oficiales para el periférico de Radio Definida por Software (SDR) más utilizado en auditorías RF.</span>
+                    <span class="tags">SDR, RF, Hardware</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://hackaday.com/category/security-hacks/" target="_blank">Hackaday - Security Hacks</a>
+                    <span class="description">Blog técnico diario con pruebas de concepto sobre ingeniería inversa de hardware y modificaciones electrónicas.</span>
+                    <span class="tags">Noticias, Ingeniería Inversa, Electrónica</span>
+                </li>
+                <li class="link-item">
+                    <a href="https://pwnagotchi.ai/" target="_blank">Pwnagotchi</a>
+                    <span class="description">IA basada en Deep Reinforcement Learning para capturar handshakes WPA. Documentación e instrucciones de ensamblaje.</span>
+                    <span class="tags">Wi-Fi, IA, Raspberry Pi, WPA</span>
+                </li>
+            </ul>
+        </section>
+
+    </div>
+
+    <script>
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            let filter = this.value.toLowerCase();
+            let cards = document.querySelectorAll('.category-card');
+
+            cards.forEach(card => {
+                let items = card.querySelectorAll('.link-item');
+                let hasVisibleItems = false;
+
+                items.forEach(item => {
+                    let text = item.textContent.toLowerCase();
+                    if (text.includes(filter)) {
+                        item.classList.remove('hidden');
+                        hasVisibleItems = true;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+
+                // Ocultar toda la categoría si no hay resultados en ella
+                if (hasVisibleItems) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
